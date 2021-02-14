@@ -1,17 +1,18 @@
 # MRInference Winter School workshop, February 15-19 2021
 Data and scripts for the mrinference winterschool 2021
 
+
+## Lab Session Monday
+
+During the theoretical part I showed you examples of how the GLM is used to analyse fMRI data, and what the choices and options are in doing these analyses. During this Lab Session we will explore some of these choices on real data. As these analyses are always performed voxel-by-voxel, we will mainly analyse single-voxel data.
+
 ### Setting-up R and Rstudio
 
 Download R (https://cran.r-project.org/) and RStudio (https://rstudio.com/products/rstudio/download/#download), you need the free desktop edition.
 
 Once you have opened RStudio we need to install the following packages by copying the code below in the Console window:
 ```
-install.packages(c('devtools','neuRosim'))
-```
-After that you need to install niftiR6 from GitHub
-```
-devtools::install_github('wdweeda/niftiR6')
+install.packages('neuRosim')
 ```
 Note that the code is case sensitive.
 
@@ -23,7 +24,7 @@ I've created a dataset based on a real experiment where participants listened to
 load('fmri_data_hrf.RData')
 ```
 
-### Making a regressor
+### Example 1: Making a regressor
 In the R environment there are now 8 objects containing a time-series: `s1left, s1right, s2left, s2right, ...` etc. These are the time-series that we can now do our 'lower-level' or HRF modelling on. To view a time-series we can create a plot.
 
 ```
@@ -67,8 +68,9 @@ We've now created a new regressor named `conv_condA`. Let's see how it looks by 
 conv_out = lm(s1left ~ 1 + conv_condA)
 ```
 For a summary type `summary(conv_out)`. Now the regressor seems to fit much better! Let's check this visually.
-
 ```
 plot(s1left,type='l')
 lines(predict(conv_out),col=2)
 ```
+And this is basically what happens under the hood when doing fMRI analysis. For the next section we'll expand our design matrix by incorporating different regressors to see what kind of analyses can be done (and how flexible the GLM is in doing these analyses).
+
