@@ -143,4 +143,41 @@ As you can see, the addition of these temporal derivatives seem to improve the m
 
 ### Questions
 1. Run a model with two regressors, one with derivatives and one without derivatives on the data from subject 3 (`s3left` and `s3right` seperately). Do you notice any differences in model fit between the models with and without derivatives, and between the outcomes of `s3left` and `s3right`.
-2. What could have happened with subject 3's time-series?
+2. What could have happened with subject 3's time-series if you compare left and right?
+
+### Example 3: Scrubbing motion
+
+Motion can be a pesky thing in fMRI analysis. Especially in connectivity studies correcting for motion is of utmost importance since it can induce spurious correlations. For task-based fMRI it can lead to spurious activation as well. Let's take a look at the time-series of subject 2.
+```
+plot(s2left,type='l')
+```
+Right, around a TR of 225 (around 225*2 = 450 seconds into the experiment) there is a spike of BOLD signal, probably due to motion. As this will probably mess up our model estimates, we can control for this by 'scrubbing'/'censoring' this part of the data. We do not want to remove the spike as this will mess up the autocorrelation in the time-series (and subsequent inference). But, as you may have expected by now, the GLM can come to the rescue again.
+
+First, let's look at our model estimates without scrubbing.
+```
+conv_motionAB = lm(s2left ~ 1 + conv_condA + dv_conv_condA + conv_condB + dv_conv_condB)
+summary(conv_motionAB)
+lines(predict(conv_motionAB),col=2)
+```
+
+Now let's create censoring regressor to pick up the motion artefact. From the data (using `which.min(s2left)` and `which.max(s2left)`) we see that the motion is at TRs 225 and 226. To make sure we capture all the motion we make regressors one TR before and after the spike, so from 224 to 227. We simply create 4 vectors of zeroes the same length as our time-series and replace the TRs from 224:227 with 1's in each of them. If we add these regressor to our model, it will basically take care of the spike.
+
+```
+mot = matrix(0,nrow=length(s2left),ncol=4)
+mot[224,1] = 1
+mot[225,2] = 1
+mot[226,3] = 1
+mot[227,4] = 1
+
+conv_motionAB_plus = lm(s2left ~ 1 + conv_condA + dv_conv_condA + conv_condB + dv_conv_condB + mot)
+summary(conv_motionAB_plus)
+lines(predict(conv_motionAB),col=2)
+lines(predict(conv_motionAB_plus),col=3)
+```
+Note that these four regressors our now modeled in a matrix, this is for convenience. In the summary you see the four separate regressors. This method can be used to dampen motion effects by creating a seperate regressor around each motion confounded time-point.
+
+
+### Questions
+1. Compare the summary of `conv_motionAB` and `conv_motionAB_plus`. What effect did motion have on the parameter estimates of the two main conditions? Did motion dampen the effect or did it spuriously increase the effect?
+2. Run the analysis also on `s2right` is the effect the same?
+
