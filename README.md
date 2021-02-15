@@ -122,7 +122,7 @@ As can be seen the red line captures data much better than the green line alone,
 3. Now correlate the convolved regressors. What is the correlation now?
 
 ## Example 3: Solving model mismatch
-
+### Peak latency mismatch
 In the above analyses we've assumed a fixed shape of the HRF, while this leads to efficient estimation, any differences in the actual BOLD signal are not taken into account. For example, the peak of the HRF might be later than is assumed in the fixed HRF model. To correct for this we can extend the model using additional regressors. One of the most widely used addition regressors is the 'temporal derivative', which allows for the peak of the HRF to be shifted in time (earlier and later). The derivative is a function of the slope of the HRF and can be calculated using the `diff` function in R (we approximate the slope of the HRF by making a function of the difference between adjacent time-points, we add a 0 at the end to make the vector of the correct length again).
 ```
 dv_conv_condA = c(diff(conv_condA),0)
@@ -145,7 +145,7 @@ As you can see, the addition of these temporal derivatives seem to improve the m
 1. Run a model with two regressors, one with derivatives and one without derivatives on the data from subject 3 (`s3left` and `s3right` seperately). Do you notice any differences in model fit between the models with and without derivatives, and between the outcomes of `s3left` and `s3right`.
 2. What could have happened with subject 3's time-series if you compare left and right?
 
-### Example 3: Scrubbing motion
+### Motion scrubbing
 
 Motion can be a pesky thing in fMRI analysis. Especially in connectivity studies correcting for motion is of utmost importance since it can induce spurious correlations. For task-based fMRI it can lead to spurious activation as well. Let's take a look at the time-series of subject 2.
 ```
