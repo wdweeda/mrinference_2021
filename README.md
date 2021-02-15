@@ -1,5 +1,5 @@
 # MRInference Winter School, February 15-19 2021
-Data and scripts for the MRInference winterschool 2021 LAB session, Monday Februart 15, 14:00 - 16:00.
+Data and scripts for the MRInference winterschool 2021 LAB session, Monday February 15, 14:00 - 16:00.
 
 
 # Lab Session Monday
@@ -169,10 +169,12 @@ mot[225,2] = 1
 mot[226,3] = 1
 mot[227,4] = 1
 
+
 conv_motionAB_plus = lm(s2left ~ 1 + conv_condA + dv_conv_condA + conv_condB + dv_conv_condB + mot)
 summary(conv_motionAB_plus)
 lines(predict(conv_motionAB),col=2)
 lines(predict(conv_motionAB_plus),col=3)
+
 ```
 Note that these four regressors our now modeled in a matrix, this is for convenience. In the summary you see the four separate regressors. This method can be used to dampen motion effects by creating a seperate regressor around each motion confounded time-point.
 
@@ -181,3 +183,90 @@ Note that these four regressors our now modeled in a matrix, this is for conveni
 1. Compare the summary of `conv_motionAB` and `conv_motionAB_plus`. What effect did motion have on the parameter estimates of the two main conditions? Did motion dampen the effect or did it spuriously increase the effect?
 2. Run the analysis also on `s2right` is the effect the same?
 
+## Example 4: Estimating the HRF, across conditions and 
+
+Up until now we have used fixed HRF functions to model the BOLD signal. We've also used additional regressors (derivatives, motion) to improve model fit by making the model more flexible and accounting for confounds. The GLM also allows for estimation of the HRF itself, so without assuming any shape of the HRF beforehand. For this we use Finite Impulse Response (FIR) models. These models capture the BOLD response after each stimulus presentation in small time windows. The FIR function can be downloaded from github (`fir.R`). We'll use the data from subject 4.
+
+You can use this function by 'sourcing' it to the environment using
+```
+source('fir.R')
+```
+
+Let's make a FIR regressor for our first condition. Using a length of 20 seconds (10 TRs) using a window length of 2 seconds each, so 10 1TR regressors starting at each stimulus onset.
+
+```
+firA <- FIR(onset = condA[,1], tslength = length(s4left), hrflen = 20, window = 2, TR =2)
+```
+We can now use this matrix as our design-matrix in the GLM and estimate the HRF across all stimulus onsets.
+```
+hrfA <- lm(s4left ~ 1 + firA)
+summary(hrfA)
+```
+
+This will give us model output for our 10 coefficients. We can plot these against the data again:
+```
+plot(s4left,type='l')
+lines(predict(hrfA),col=2)
+```
+Let's also plot the fixed HRF model:
+```
+convs4 <- lm(s4left ~ 1 + conv_condA)
+lines(predict(convs4),col=3)
+```
+Quite a stark difference right?
+
+We can also plot the estimated HRF by looking at our coefficients:
+```
+normhrf <- coef(hrfA)[-1]/max(coef(hrfA)[-1])
+plot(normhrf,type='l')
+```
+Let's add the lines of the standard HRF as well using the correct settings (duration of 8)
+```
+lines(neuRosim::specifydesign(0,8,20,2,1,conv='double-gamma'),col=2)
+```
+This seems to be quite different. We have now estimated the HRF using only one condition. We might improve estimation if we add the FIR regressors of the second condition as well. First let's estimate one HRF across both conditions.
+
+```
+firAB <- FIR(onset = sort(c(condA[,1],condB[,1])), tslength = length(s4left), hrflen = 20, window = 2, TR =2)
+
+hrfAB <- lm(s4left ~ 1 + firAB)
+summary(hrfAB)
+```
+Now plot the estimated HRF again.
+```
+normhrfAB <- coef(hrfAB)[-1]/max(coef(hrfAB)[-1])
+plot(normhrfAB,type='l')
+lines(normhrf,col=2)
+```
+This seems to improve estimation as well, overall fit also looks better.
+```
+summary(hrfAB)
+
+plot(s4left,type='l')
+lines(predict(hrfAB),col=2)
+lines(predict(convs4),col=3)
+````
+We can also estimate the HRF of both conditions separately.
+```
+firB <- FIR(onset = condB[,1], tslength = length(s4left), hrflen = 20, window = 2, TR =2)
+
+hrfABplus <- lm(s4left ~ 1 + firA + firB)
+summary(hrfABplus)
+
+normhrfA <- coef(hrfABplus)[-1][1:10]/max(coef(hrfABplus)[-1][1:10])
+normhrfB <- coef(hrfABplus)[-1][11:20]/max(coef(hrfABplus)[-1][11:20])
+
+layout(matrix(1:2,ncol=2))
+plot(normhrfA,type='l')
+plot(normhrfB,type='l')
+layout(1)
+
+```
+FIR models are thus suited to estimate the HRF, but are more variable in their estimation. Also interpretation is harder as we now have many more coefficients to interpret (compare with a fixed HRF analysis where there is one regression coeffient for each condition). Depending on the research question the FIR approach can be very useful and informative.
+
+### Questions and home-work
+1. Why do you think the 2 HRFs of the last question look different?
+2. Estimate the HRFs for `s4right` across both conditions at once (so the 'firAB' type regressor). Do you see differences with the HRF between 's4right' and 's4left'?
+3. Estimate the HRFs for `s3left` and compare this with the full approach (with temporal derivatives) we performed earlier. Do both models capture the same model misfit?
+
+end.
