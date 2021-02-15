@@ -59,8 +59,7 @@ The regressor does not seem to fit the data very well yet. But, of course, we ha
 ```
 conv_condA = specifydesign(onsets = condA[,1], durations = condA[,2], effectsize = condA[,3], totaltime = length(s1left)*2, TR = 2, conv = 'double-gamma')
 ```
-
-We've now created a new regressor named `conv_condA`. Let's see how it looks by typing `plot(conv_condA,type='l')`. This is the reg_condA vector but now convolved with the HRF. Let's run our regression again as well, but now with the new regressor.
+(You can ignore the warning). We've now created a new regressor named `conv_condA`. Let's see how it looks by typing `plot(conv_condA,type='l')`. This is the reg_condA vector but now convolved with the HRF. Let's run our regression again as well, but now with the new regressor.
 ```
 conv_out = lm(s1left ~ 1 + conv_condA)
 ```
@@ -88,3 +87,60 @@ Example code for the first analysis can be found in `intial_code.R` on github.
 1. The analysis above is performed for `s1left` try and perform this analysis for `s1right` with the convolved regressor.
 2. Can you spot differences in model fit?
 3. Are there differences in terms of regression coefficients?
+4. Try and see whether you can run an analysis with a different HRF model. In `specifydesign` the option `conv = ` allows for different inputs (try and run `?specifydesign` in the command line to see them). Now it is set to `double-gamma`, the other options are `balloon` and `gamma`. Can you see differences in outcome when you use a different HRF? 
+
+## Example 2: Extending the model
+
+We have just performed the analysis that is the backbone of almost all task-based fMRI studies! This is what happens for every voxel time-series. This first analysis fitted a simple regression model, where we modeled only one condition. In the actual experiment there are two conditions. So let us extend the regression model with this second condition.
+
+```
+conv_condB = specifydesign(onsets = condB[,1], durations = condB[,2], effectsize = condB[,3], totaltime = length(s1left)*2, TR = 2, conv = 'double-gamma')
+```
+
+This is the convolved regressor for the second condition. Let's plot the two regressors to see how they look.
+```
+plot(conv_condA,type='l',col=2)
+lines(conv_condB,col=3)
+```
+
+As you can see the different colors indicate the different regressors. The different conditions are dispersed randomly and there is enough overlap between regressors. We can now run a GLM with both these regressors. We can incorporate them in the `lm` statement using a `+` sign. In the `lm` command we use formula notation: $y = ax + b_{1}x + b_2{x}$ is written as `y ~ 1 + conv_condA + conv_condB` (y equals and intercept + regressor 1 + regressor 2). Run and plot.
+
+```
+conv_outAB = lm(s1left ~ 1 + conv_condA + conv_condB)
+plot(s1left,type='l')
+lines(predict(conv_outAB),col=2)
+```
+This seems to fit the data better than our first model. Let's add this line for reference.
+```
+lines(predict(conv_out),col=3)
+```
+As can be seen the red line captures data much better than the green line alone, also, the model fit of the model with two regressors is much better.
+
+### Questions
+1. Compare the estimate for condition A in the summary of `conv_out` and `conv_outAB`, are there differences in terms of the strength of these coefficients? Can you explain?
+2. Create a regressor without convolution for condition B. And calculate a correlation with this regressor and the unconvolved regressor of `reg_condA`. (Hint use the function `cor(reg_condA, reg_condB)`)
+3. Now correlate the convolved regressors. What is the correlation now?
+
+## Example 3: Solving model mismatch
+
+In the above analyses we've assumed a fixed shape of the HRF, while this leads to efficient estimation, any differences in the actual BOLD signal are not taken into account. For example, the peak of the HRF might be later than is assumed in the fixed HRF model. To correct for this we can extend the model using additional regressors. One of the most widely used addition regressors is the 'temporal derivative', which allows for the peak of the HRF to be shifted in time (earlier and later). The derivative is a function of the slope of the HRF and can be calculated using the `diff` function in R (we approximate the slope of the HRF by making a function of the difference between adjacent time-points, we add a 0 at the end to make the vector of the correct length again).
+```
+dv_conv_condA = c(diff(conv_condA),0)
+dv_conv_condB = c(diff(conv_condB),0)
+```
+
+Let's now run the model on our data again with our added derivative regressors.
+```
+dv_conv_outAB = lm(s1left ~ 1 + conv_condA + dv_conv_condA + conv_condB + dv_conv_condB)
+```
+And plot both the model with and without derivatives.
+```
+plot(s1left,type='l')
+lines(predict(conv_outAB),col=2)
+lines(predict(dv_conv_outAB),col=3)
+```
+As you can see, the addition of these temporal derivatives seem to improve the model even further.
+
+### Questions
+1. Run a model with two regressors, one with derivatives and one without derivatives on the data from subject 3 (`s3left` and `s3right` seperately). Do you notice any differences in model fit between the models with and without derivatives, and between the outcomes of `s3left` and `s3right`.
+2. What could have happened with subject 3's time-series?
