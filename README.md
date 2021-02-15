@@ -183,7 +183,7 @@ Note that these four regressors our now modeled in a matrix, this is for conveni
 1. Compare the summary of `conv_motionAB` and `conv_motionAB_plus`. What effect did motion have on the parameter estimates of the two main conditions? Did motion dampen the effect or did it spuriously increase the effect?
 2. Run the analysis also on `s2right` is the effect the same?
 
-## Example 4: Estimating the HRF, across conditions and 
+## Example 4: Estimating the HRF across conditions
 
 Up until now we have used fixed HRF functions to model the BOLD signal. We've also used additional regressors (derivatives, motion) to improve model fit by making the model more flexible and accounting for confounds. The GLM also allows for estimation of the HRF itself, so without assuming any shape of the HRF beforehand. For this we use Finite Impulse Response (FIR) models. These models capture the BOLD response after each stimulus presentation in small time windows. The FIR function can be downloaded from github (`fir.R`). We'll use the data from subject 4.
 
