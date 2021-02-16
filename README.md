@@ -291,4 +291,45 @@ lines(conv_condA,col=2)
 ```
 You can now see that the convolved stimuli are now different across trials.
 
+### Single trial HRF modeling.
+You can also model single trials by making separate regressors for each stimulus. This can be used to calculate the correlation between activity in two regions of interest, for example s1left and s1right. If we would just correlate the time-series, the sluggishness of the HRF can inflate the correlation:
+```
+
+cor(s1left,s1right)
+
+```
+If we now make a regressor for every single stimulus in the experiment (40 in this case), and use this our design matrix, the output of the GLM will give us height estimates of the BOLD response at each trial. If we then correlate these coefficients we have a cleaner estimate of the correlation.
+```
+ord = order(c(condA[,1],condB[,1]))
+
+des = vector('list',40)
+for(i in 1:40) {
+  des[[i]] = specifydesign(onsets=c(condA[,1],condB[,1])[ord][i],durations=c(condA[,2],condB[,2])[ord][i],effectsize=c(condA[,3],condB[,3])[ord][i], totaltime = length(s1left)*2, TR = 2, conv = 'double-gamma')
+}
+m = matrix(unlist(des),nrow=310,ncol=40,byrow=F)
+
+plot(m[,1],type='l')
+lines(m[,13],col=2)
+
+st_outL <- lm(s1left ~ 1 + m)
+
+plot(s1left,type='l')
+lines(predict(st_outL),col=2)
+
+
+st_outR <- lm(s1right ~ 1 + m)
+
+plot(s1right,type='l')
+lines(predict(st_outR),col=2)
+
+coef(st_outL)[-1]
+coef(st_outR)[-1]
+
+cor(s1left,s1right)
+
+cor(coef(st_outL)[-1],coef(st_outR)[-1])
+
+```
+
+
 
