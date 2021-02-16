@@ -330,6 +330,7 @@ cor(s1left,s1right)
 cor(coef(st_outL)[-1],coef(st_outR)[-1])
 
 ```
+The single-trial estimates can also be used in prediction approaches like MVPA, where we need an estimate of activation on a trial-by-trial basis.
 
 
 

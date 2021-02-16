@@ -31,12 +31,12 @@ plot(s1left,type='l')
 lines(predict(conv_out),col=2)
 
 #ANSWER 1
-outR = lm(s1right ~ 1 + reg_condA)
+outR = lm(s1right ~ 1 + conv_condA)
 
 plot(s1right,type='l')
 lines(predict(outR),col=2)
 
-summary(out)
+summary(conv_out)
 summary(outR)
 
 reg_condA_gamma = specifydesign(onsets = condA[,1], 
