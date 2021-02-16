@@ -270,3 +270,25 @@ FIR models are thus suited to estimate the HRF, but are more variable in their e
 3. Estimate the HRFs for `s3left` and compare this with the full approach (with temporal derivatives) we performed earlier. Do both models capture the same model misfit?
 
 end.
+
+Not really, let's look at another example.
+
+## EXAMPLE 5, within condition variability in BOLD
+
+Usually we are interested in estimating one regressor per condition. Assuming that all responses to a stimuli are equal in height (or we are interested just in the average BOLD height over all trials and ignore variability). If you have trial-by-trial estimates of additional measures (like reaction time, or stimulus intensity) you can model this via the GLM is well. This can be done in both the weight/height of the stimuli or in the duration of the timings.
+
+For example in `condA` we could change the duration column (2) to reflect reaction time.
+```
+set.seed(42)
+condArt = condA
+condArt[,2] = rnorm(nrow(condArt),3,1)
+```
+(This is just an example with random data). But you can use these new timings in `specifydesign`
+```
+conv_condArt = specifydesign(onsets = condArt[,1], durations = condArt[,2], effectsize = condArt[,3], totaltime = length(s1left)*2, TR = 2, conv = 'double-gamma')
+plot(conv_condArt,type='l')
+lines(conv_condA,col=2)
+```
+You can now see that the convolved stimuli are now different across trials.
+
+
