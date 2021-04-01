@@ -349,7 +349,7 @@ library(RNifti)
 We can now load the package `ARIBrain` using:
 ```
 devtools::install_github('wdweeda/ARIBrain')
-library(ARIBrain)
+library(ARIbrain)
 ```
 Now ARI is installed in R. Finally, source the plot function. Download `plot_mri.R` and type:
 ```
