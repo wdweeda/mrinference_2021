@@ -13,6 +13,7 @@ Download R (https://cran.r-project.org/) and RStudio (https://rstudio.com/produc
 Once you have opened RStudio we need to install the following packages by copying the code below in the Console window:
 ```
 install.packages('neuRosim')
+library(neuRosim)
 ```
 Note that the code is case sensitive.
 
@@ -332,5 +333,50 @@ cor(coef(st_outL)[-1],coef(st_outR)[-1])
 ```
 The single-trial estimates can also be used in prediction approaches like MVPA, where we need an estimate of activation on a trial-by-trial basis.
 
+## Auditory ARI analysis
 
+Now we will perform an All-Resolutions Inference analysis on the auditory data. First download and uncompress the `auditory_data.zip` into your working directory.
+
+Now install the package `devtools` and `RNifti`
+
+```
+install.packages('devtools')
+library(devtools)
+install.packages('RNifti')
+library(RNifti)
+```
+
+We can now load the package `ARIBrain` using:
+```
+devtools::install_github('wdweeda/ARIBrain')
+library(ARIBrain)
+```
+Now ARI is installed in R. Finally, source the plot function. Download `plot_mri.R` and type:
+```
+source('plot_mri.R')
+```
+
+### Load some data
+Now we can load the necessary data-files. We need a p-value file, a mask file, a cluster index file, and a zstat file (optional).
+```
+mask = readNifti('mask.nii.gz')
+pval = readNifti('pvalue_stat1.nii.gz')
+zstat = readNifti('zstat1.nii.gz')
+```
+These are the files that will be the same across our analyses. What will change is the clusters we give to the analysis. Let's first try an analysis with a z-threshold of 3. For this we load `clus3.nii.gz`.
+```
+clus = readNifti('clus3.nii.gz')
+```
+Now we can run ARI:
+```
+out3 = ARI(Pmap = pval, cluster = clus, mask = mask, Statmap = zstat)
+```
+Let's see whether we can plot the maxima:
+```
+plot_mri(zstat,c(77,58,39))
+```
+We can also plot the clusters:
+```
+plot_mri(clus,c(77,58,39))
+```
 
